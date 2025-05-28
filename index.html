@@ -378,7 +378,7 @@
         
         listen_playPauseButton.textContent = "▶️";
         listen_audioPlayer.currentTime = 0;
-        listen_isPaused = true; 
+        listen_isPaused = true; // Start in paused state
         listen_audioWasEnded = false;
 
         listen_playPauseButton.onclick = listen_toggleAudio;
@@ -396,7 +396,7 @@
                  }
             });
         };
-        listen_audioPlayer.onplay = () => { listen_isPaused = false; listen_highlightWords(); };
+        listen_audioPlayer.onplay = () => { listen_isPaused = false; listen_highlightWords(); }; // onplay also calls highlight
         listen_audioPlayer.onseeked = listen_highlightWords;
 
         listen_words.forEach(word => {
@@ -407,7 +407,7 @@
                 }
                 let startTime = parseFloat(this.dataset.time);
                 listen_audioPlayer.currentTime = startTime;
-                listen_highlightWords(); 
+                listen_highlightWords(); // Update highlights immediately
                 if (listen_audioPlayer.paused || listen_audioPlayer.ended) {
                     listen_audioPlayer.play();
                     listen_isPaused = false;
@@ -424,6 +424,7 @@
         }
         listen_playPauseButton.textContent = "▶️";
         listenModeUI.style.display = 'none';
+        // Remove event listeners to prevent memory leaks if re-initializing
         listen_playPauseButton.onclick = null;
         listen_audioPlayer.ontimeupdate = null;
         listen_audioPlayer.onended = null;
@@ -447,15 +448,35 @@
     let memorize_silenceTimeout;
     let memorize_recognition;
 
+    // ***** THIS IS THE UPDATED NORMALIZATION FUNCTION *****
     function memorize_normalizeArabic(text) {
         if (!text) return "";
-        text = text.replace(/[إأآٱ]/g, "ا");
+
+        // 1. Remove common Arabic diacritics (Tashkeel)
+        // This covers Fathatan, Dammatan, Kasratan, Fatha, Damma, Kasra, Shadda, Sukun, and other common marks.
+        text = text.replace(/[\u064B-\u0652\u0670\u06D6-\u06ED]/g, "");
+        // \u0670 is Dagger Alef, also handled below.
+
+        // 2. Normalize Alef forms (including Dagger Alef to standard Alef)
+        text = text.replace(/[إأآٱٰ]/g, "ا"); // Added Dagger Alef (ٰ) to this list.
+
+        // 3. Normalize Teh Marbuta to Heh
+        text = text.replace(/ة/g, "ه");
+
+        // 4. Normalize Alef Maksura to Yeh
         text = text.replace(/ى/g, "ي");
+
+        // 5. Normalize Hamza forms on Waw and Yeh
         text = text.replace(/ؤ/g, "و");
         text = text.replace(/ئ/g, "ي");
-        text = text.replace(/ة/g, "ه");
+        
+        // Optional: remove Tatweel (kashida) - decorative elongation
+        text = text.replace(/\u0640/g, "");
+
         return text.trim();
     }
+    // ***** END OF UPDATED NORMALIZATION FUNCTION *****
+
 
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -528,7 +549,7 @@
                 if (memorize_shouldRestart && memorize_currentWordIndex < memorize_wordSpans.length) return;
                 errorMsg = "لم يتم اكتشاف أي كلام. استمر في المحاولة...";
             } else if (['audio-capture', 'not-allowed', 'network', 'service-not-allowed'].includes(event.error)) {
-                memorize_shouldRestart = false; 
+                memorize_shouldRestart = false; // Stop trying to restart on critical errors
                  if (event.error === 'audio-capture') errorMsg = "مشكلة في التقاط الصوت من الميكروفون.";
                  if (event.error === 'not-allowed') errorMsg = "تم رفض إذن استخدام الميكروفون. يرجى السماح بالوصول.";
                  if (event.error === 'network') errorMsg = "مشكلة في الشبكة تمنع الاتصال بخدمة التعرف الصوتي.";
@@ -537,7 +558,7 @@
 
             if (!memorize_shouldRestart || event.error !== 'no-speech') {
                 memorize_speechStatus.textContent = errorMsg;
-                memorize_isRecognizing = false; 
+                memorize_isRecognizing = false; // Ensure this is set
                 memorize_updateUIForStopped();
             }
         };
@@ -568,6 +589,7 @@
             if (memorize_accumulatedFinalTranscript && memorize_currentWordIndex < memorize_wordSpans.length && memorize_isRecognizing) {
                 const wordsToProcess = memorize_accumulatedFinalTranscript.trim().split(" ");
                 memorize_accumulatedFinalTranscript = "";
+                 // console.log("[MEMORIZE] Words to process from speech:", wordsToProcess); 
 
                 for (let spokenWord of wordsToProcess) {
                     if (!memorize_isRecognizing || memorize_currentWordIndex >= memorize_wordSpans.length) break;
@@ -576,21 +598,31 @@
                     if (!normalizedSpokenWord) continue;
 
                     const targetWordSpan = memorize_wordSpans[memorize_currentWordIndex];
+                    // Ensure targetWordSpan and its dataset.word are valid before using them
+                    if (!targetWordSpan || typeof targetWordSpan.dataset.word === 'undefined') {
+                        // console.error("[MEMORIZE] Target word span or its dataset.word is invalid at index:", memorize_currentWordIndex, targetWordSpan);
+                        continue; // Skip to the next spoken word or stop if an error in logic
+                    }
                     const targetWordText = targetWordSpan.dataset.word;
 
+                    // console.log(`[MEMORIZE] Comparing: Spoken (norm): "${normalizedSpokenWord}" vs Target (norm): "${targetWordText}" (Original target: "${targetWordSpan.textContent}") at index ${memorize_currentWordIndex}`);
+
                     if (targetWordText && normalizedSpokenWord === targetWordText) {
+                        // console.log("[MEMORIZE] MATCHED!", normalizedSpokenWord);
                         const previouslyHighlighted = sentenceContainerShared.querySelector('.highlight-active-word');
                         if (previouslyHighlighted && previouslyHighlighted !== targetWordSpan) {
                             previouslyHighlighted.classList.remove('highlight-active-word');
                             previouslyHighlighted.classList.add('processed-word'); // This class also makes word visible
                         }
-                        targetWordSpan.classList.remove('processed-word'); 
+                        targetWordSpan.classList.remove('processed-word'); // In case it was marked as such by mistake
                         targetWordSpan.classList.add('highlight-active-word'); // This class makes word visible
                         memorize_currentWordIndex++;
                         
                         if (memorize_currentWordIndex < memorize_wordSpans.length && memorize_isRecognizing) {
                              memorize_speechStatus.textContent = "ممتاز! الكلمة التالية...";
                         }
+                    } else {
+                        // console.log("[MEMORIZE] NO MATCH.");
                     }
                 }
 
@@ -599,39 +631,42 @@
                     memorize_shouldRestart = false;
                     if (memorize_isRecognizing) {
                         console.log("Memorize: All words matched, stopping recognition.");
-                        memorize_recognition.stop(); 
+                        memorize_recognition.stop(); // This will trigger onend, which updates UI
                     } else {
-                         memorize_updateUIForStopped(); 
+                         memorize_updateUIForStopped(); // Update UI if not recognizing (e.g. stopped manually then processed)
                     }
                 }
             }
         };
-    } 
+    } else {
+        // SpeechRecognitionAPI is not available
+        // This setup is done in initMemorizeMode now
+    }
 
     function memorize_toggleSpeechRecognition() {
         if (!SpeechRecognitionAPI) return;
-        console.log(`Memorize.toggleSpeechRecognition. Current state: isRecognizing = ${memorize_isRecognizing}, shouldRestart = ${memorize_shouldRestart}`);
+        // console.log(`Memorize.toggleSpeechRecognition. Current state: isRecognizing = ${memorize_isRecognizing}, shouldRestart = ${memorize_shouldRestart}`);
 
-        if (memorize_isRecognizing || memorize_shouldRestart) { 
-            console.log("Memorize: Stopping recognition.");
-            memorize_shouldRestart = false; 
+        if (memorize_isRecognizing || memorize_shouldRestart) { // If it's running or set to auto-restart
+            // console.log("Memorize: Stopping recognition.");
+            memorize_shouldRestart = false; // User explicitly stopped it
             if (memorize_restartTimeout) clearTimeout(memorize_restartTimeout);
             if (memorize_silenceTimeout) clearTimeout(memorize_silenceTimeout);
             memorize_restartTimeout = null;
             memorize_silenceTimeout = null;
 
             if (memorize_isRecognizing) {
-                memorize_recognition.stop(); 
+                memorize_recognition.stop(); // This will trigger onend, which updates UI
             } else {
-                memorize_updateUIForStopped(); 
+                memorize_updateUIForStopped(); // If not recognizing but shouldRestart was true
             }
         } else {
             if (memorize_currentWordIndex >= memorize_wordSpans.length) {
-                console.log("Memorize: All words done, resetting activity to start again.");
-                memorize_resetActivity(); 
+                // console.log("Memorize: All words done, resetting activity to start again.");
+                memorize_resetActivity(); // Reset to start over
             }
             
-            console.log("Memorize: Starting recognition.");
+            // console.log("Memorize: Starting recognition.");
             memorize_shouldRestart = true; 
             try {
                 memorize_recognition.start();
@@ -646,10 +681,10 @@
     }
 
     function memorize_resetActivity() {
-        console.log("Memorize.resetActivity called.");
+        // console.log("Memorize.resetActivity called.");
         memorize_currentWordIndex = 0;
         memorize_accumulatedFinalTranscript = "";
-        memorize_shouldRestart = false; 
+        memorize_shouldRestart = false; // Don't auto-restart after a manual reset
         
         if (memorize_restartTimeout) clearTimeout(memorize_restartTimeout);
         if (memorize_silenceTimeout) clearTimeout(memorize_silenceTimeout);
@@ -662,8 +697,8 @@
         memorize_speechStatus.textContent = "اضغط \"ابدأ\" وتحدث";
         
         if (memorize_isRecognizing) {
-            console.log("Memorize.resetActivity: Recognition active, stopping.");
-            memorize_recognition.stop(); 
+            // console.log("Memorize.resetActivity: Recognition active, stopping.");
+            memorize_recognition.stop(); // Triggers onend which calls updateUIForStopped
         } else {
             memorize_updateUIForStopped();
         }
@@ -672,8 +707,6 @@
     function initMemorizeMode() {
         memorizeModeUI.style.display = 'block';
         sentenceContainerShared.style.display = 'block';
-        // No need to call resetAllWordStyles() here directly, 
-        // as memorize_resetActivity() will call it.
         
         allWordSpansShared.forEach(span => {
             span.style.cursor = 'default'; // Words not clickable in memorize mode
@@ -691,10 +724,13 @@
              memorize_resetButton.disabled = false;
         }
 
-        // Ensure dataset.word is populated for all words before any recognition attempt.
+        // Ensure dataset.word is populated for all words using the updated normalize function
+        // This must happen *before* memorize_resetActivity if resetActivity relies on dataset.word
+        // (though in this case, resetActivity mainly handles UI and flags)
         memorize_wordSpans.forEach(span => {
-            const normalizedText = memorize_normalizeArabic(span.textContent);
+            const normalizedText = memorize_normalizeArabic(span.textContent); // Uses the updated function
             span.dataset.word = normalizedText;
+            // console.log(`[MEMORIZE INIT] Original: "${span.textContent}", Normalized to dataset.word: "${normalizedText}"`);
         });
         
         // This call is crucial. It resets the state, including calling resetAllWordStyles()
@@ -709,7 +745,7 @@
 
     function deactivateMemorizeMode() {
         if (SpeechRecognitionAPI && memorize_recognition && memorize_isRecognizing) {
-            memorize_shouldRestart = false; 
+            memorize_shouldRestart = false; // Prevent restart when switching modes
             memorize_recognition.stop();
         }
         if (memorize_restartTimeout) clearTimeout(memorize_restartTimeout);
@@ -725,6 +761,7 @@
 
     // --- Mode Switching Logic ---
     function switchToMode(mode) {
+        // Deactivate previous mode
         if (currentActiveMode === 'listen') {
             deactivateListenMode();
             btnSelectListen.classList.remove('active');
@@ -733,6 +770,7 @@
             btnSelectMemorize.classList.remove('active');
         }
 
+        // Activate new mode
         if (mode === 'listen') {
             initListenMode();
             btnSelectListen.classList.add('active');
@@ -743,7 +781,7 @@
             initMemorizeMode();
             btnSelectMemorize.classList.add('active');
             currentActiveMode = 'memorize';
-        } else { 
+        } else { // No mode / initial state
             listenModeUI.style.display = 'none';
             memorizeModeUI.style.display = 'none';
             sentenceContainerShared.style.display = 'none';
@@ -754,6 +792,7 @@
     btnSelectListen.addEventListener('click', () => switchToMode('listen'));
     btnSelectMemorize.addEventListener('click', () => switchToMode('memorize'));
 
+    // Initial Page Load State: No mode selected
     switchToMode(null); 
     console.log("Page loaded. Select a mode to begin.");
 
