@@ -263,7 +263,12 @@
             .ayah-number {
                 font-size: 0.65em;
             }
-        }
+       .memorize-mode .spoken {
+    visibility: visible !important;
+    background: rgba(67, 233, 123, 0.2);
+    color: #333;
+}
+	}
     </style>
 </head>
 <body>
@@ -828,6 +833,16 @@
                statusMessage.textContent = "خطأ في بدء التعرف الصوتي";
            }
        }
+	   if (targetWordText && normalizedSpokenWord === targetWordText) {
+    const previouslyHighlighted = document.querySelector('#sentence .highlight');
+    if (previouslyHighlighted && previouslyHighlighted !== targetWordSpan) {
+        previouslyHighlighted.classList.remove('highlight');
+        previouslyHighlighted.classList.add('spoken'); // This should make it visible
+    }
+    targetWordSpan.classList.remove('spoken');
+    targetWordSpan.classList.add('highlight'); // This should make current word visible
+    currentWordIndex++;
+}
    }
 </script>
 </body>
