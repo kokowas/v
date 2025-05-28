@@ -35,11 +35,11 @@
         }
         .mode-select-button {
             padding: 12px 25px;
-            font-size: 20px; /* Unified font size */
-            font-family: Arial, sans-serif; /* Use a common font for buttons for broader compatibility if HafsFont doesn't render well on buttons */
+            font-size: 20px; 
+            font-family: Arial, sans-serif; 
             cursor: pointer;
             border: none;
-            background: #007BFF; /* Blue like other primary buttons */
+            background: #007BFF; 
             color: white;
             border-radius: 10px;
             margin: 10px 5px;
@@ -51,7 +51,7 @@
             outline: none;
         }
         .mode-select-button.active {
-            background: #004085; /* Darker blue for active state */
+            background: #004085; 
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
 
@@ -77,7 +77,7 @@
             border-radius: 3px;
             vertical-align: baseline;
             transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
-            cursor: default; /* Default cursor, listen mode will make it pointer */
+            cursor: default; 
             visibility: hidden; /* Default: hidden; JS will manage visibility */
         }
         .bismillah-container {
@@ -148,8 +148,8 @@
         
         /* Listen Mode Specific Button Styling */
         #listenControls #playPauseButtonListen {
-             min-width: 70px; /* Can be smaller for play/pause icon */
-             font-size: 24px; /* Larger for icon */
+             min-width: 70px; 
+             font-size: 24px; 
         }
 
 
@@ -163,12 +163,10 @@
             line-height: 1.4;
         }
         
-        /* Hide audio player by default, controls are custom */
         #audioPlayerListen {
             display: none;
         }
 
-        /* Responsive Adjustments */
         @media (max-width: 600px) {
             h1 { font-size: 1.8em; }
             #sentence { font-size: 24px; line-height: 2.3; }
@@ -195,15 +193,13 @@
         <button id="btnSelectMemorize" class="mode-select-button">احفظ</button>
     </div>
 
-    <!-- Container for Listen Mode Specific UI -->
     <div id="listenModeUI" style="display: none;">
-        <audio id="audioPlayerListen" src="099.mp3"></audio> <!-- Make sure 099.mp3 is accessible -->
+        <audio id="audioPlayerListen" src="099.mp3"></audio>
         <div class="controls" id="listenControls">
             <button id="playPauseButtonListen">▶️</button>
         </div>
     </div>
 
-    <!-- Container for Memorize Mode Specific UI -->
     <div id="memorizeModeUI" style="display: none;">
         <div id="speechStatusMemorize">اضغط "ابدأ" وتحدث</div>
         <div class="controls" id="memorizeControls">
@@ -212,8 +208,7 @@
         </div>
     </div>
 
-    <!-- Shared Sentence Display -->
-    <div id="sentence" style="display: none;"> <!-- Initially hidden, shown when a mode is selected -->
+    <div id="sentence" style="display: none;">
         <div class="bismillah-container">
             <span data-time="0.79">بِسْمِ</span>
             <span data-time="1.17">اللَّهِ</span>
@@ -269,14 +264,16 @@
         sentenceContainerShared.querySelectorAll('#sentence > span:not(.ayah-number), .bismillah-container > span')
     );
 
-    let currentActiveMode = null; // 'listen' or 'memorize'
+    let currentActiveMode = null; 
 
     // --- Global Helper ---
     function resetAllWordStyles() {
+        console.log("[GLOBAL] resetAllWordStyles called. Hiding all words via CSS class default.");
         allWordSpansShared.forEach(span => {
             span.classList.remove('highlight-active-word', 'processed-word');
-            span.style.visibility = 'hidden'; // Default to hidden
-             span.style.cursor = 'default';
+            // Words are hidden by the CSS rule: #sentence > span:not(.ayah-number) { visibility: hidden; }
+            // No need for span.style.visibility = 'hidden';
+            span.style.cursor = 'default';
         });
     }
 
@@ -318,42 +315,36 @@
 
     function listen_highlightWords() {
         if (listen_isPaused || listen_audioWasEnded) return;
-
         const currentTime = listen_audioPlayer.currentTime;
-
         listen_words.forEach((word, index) => {
             let wordTime = parseFloat(word.dataset.time);
             let endTime;
             let nextWordTime = Infinity;
-
             for (let i = index + 1; i < listen_words.length; i++) {
                 if (listen_words[i].hasAttribute('data-time')) {
                     nextWordTime = parseFloat(listen_words[i].dataset.time);
                     break;
                 }
             }
-
             if (nextWordTime !== Infinity) {
                 endTime = nextWordTime;
             } else {
-                endTime = wordTime + 1.0; // Default duration for last word if audio duration not available
+                endTime = wordTime + 1.0; 
                 if (listen_audioPlayer.duration && !isNaN(listen_audioPlayer.duration)) {
                     endTime = listen_audioPlayer.duration;
                 }
             }
-
             if (currentTime >= wordTime && currentTime < endTime) {
                 word.classList.add("highlight-active-word");
                 word.classList.remove("processed-word");
-            } else if (currentTime >= endTime && wordTime < currentTime) { // ensure wordTime is in the past
+            } else if (currentTime >= endTime && wordTime < currentTime) { 
                 word.classList.add("processed-word");
                 word.classList.remove("highlight-active-word");
-            } else { // Word is upcoming or not yet processed fully
+            } else { 
                 word.classList.remove("highlight-active-word");
                 word.classList.remove("processed-word");
             }
         });
-
         if (!listen_audioPlayer.ended && listen_audioPlayer.currentTime >= listen_audioPlayer.duration - 0.1 && listen_audioPlayer.duration > 0) {
             listen_playPauseButton.textContent = "🔄";
             listen_audioWasEnded = true;
@@ -367,17 +358,18 @@
     }
     
     function initListenMode() {
+        console.log("[LISTEN] Initializing Listen Mode.");
         listenModeUI.style.display = 'block';
         sentenceContainerShared.style.display = 'block';
-        resetAllWordStyles(); // Clear any previous mode styles
+        resetAllWordStyles(); 
         allWordSpansShared.forEach(span => {
-            span.style.visibility = 'visible'; // Make all words visible for listening
-            span.style.cursor = 'pointer'; // Make words clickable
+            span.style.visibility = 'visible'; // Explicitly make all words visible for listening
+            span.style.cursor = 'pointer'; 
         });
         
         listen_playPauseButton.textContent = "▶️";
         listen_audioPlayer.currentTime = 0;
-        listen_isPaused = true; // Start in paused state
+        listen_isPaused = true; 
         listen_audioWasEnded = false;
 
         listen_playPauseButton.onclick = listen_toggleAudio;
@@ -395,7 +387,7 @@
                  }
             });
         };
-        listen_audioPlayer.onplay = () => { listen_isPaused = false; listen_highlightWords(); }; // onplay also calls highlight
+        listen_audioPlayer.onplay = () => { listen_isPaused = false; listen_highlightWords(); };
         listen_audioPlayer.onseeked = listen_highlightWords;
 
         listen_words.forEach(word => {
@@ -406,7 +398,7 @@
                 }
                 let startTime = parseFloat(this.dataset.time);
                 listen_audioPlayer.currentTime = startTime;
-                listen_highlightWords(); // Update highlights immediately
+                listen_highlightWords(); 
                 if (listen_audioPlayer.paused || listen_audioPlayer.ended) {
                     listen_audioPlayer.play();
                     listen_isPaused = false;
@@ -414,30 +406,30 @@
                 }
             };
         });
-        console.log("Listen mode initialized.");
+        console.log("[LISTEN] Listen mode initialized.");
     }
 
     function deactivateListenMode() {
+        console.log("[LISTEN] Deactivating Listen Mode.");
         if (listen_audioPlayer && !listen_audioPlayer.paused) {
             listen_audioPlayer.pause();
         }
         listen_playPauseButton.textContent = "▶️";
         listenModeUI.style.display = 'none';
-        // Remove event listeners to prevent memory leaks if re-initializing
         listen_playPauseButton.onclick = null;
         listen_audioPlayer.ontimeupdate = null;
         listen_audioPlayer.onended = null;
         listen_audioPlayer.onplay = null;
         listen_audioPlayer.onseeked = null;
         listen_words.forEach(word => word.onclick = null);
-        console.log("Listen mode deactivated.");
+        console.log("[LISTEN] Listen mode deactivated.");
     }
 
     // --- Memorize Mode (احفظ) Variables and Functions ---
     const memorize_speechButton = document.getElementById("speechButtonMemorize");
     const memorize_speechStatus = document.getElementById("speechStatusMemorize");
     const memorize_resetButton = document.getElementById("resetButtonMemorize");
-    const memorize_wordSpans = allWordSpansShared; // Use the shared spans
+    const memorize_wordSpans = allWordSpansShared; 
 
     let memorize_currentWordIndex = 0;
     let memorize_isRecognizing = false;
@@ -466,7 +458,7 @@
         memorize_recognition.lang = 'ar-SA';
 
         memorize_recognition.onstart = () => {
-            console.log("Memorize.SpeechRecognition.onstart: Recognition started.");
+            console.log("[MEMORIZE] SpeechRecognition.onstart: Recognition started.");
             memorize_isRecognizing = true;
             memorize_accumulatedFinalTranscript = "";
             memorize_speechButton.textContent = "🔴 جاري الاستماع...";
@@ -480,7 +472,7 @@
         };
 
         memorize_recognition.onend = () => {
-            console.log("Memorize.SpeechRecognition.onend: Recognition ended.");
+            console.log("[MEMORIZE] SpeechRecognition.onend: Recognition ended.");
             memorize_isRecognizing = false;
             
             if (memorize_restartTimeout) clearTimeout(memorize_restartTimeout);
@@ -489,13 +481,13 @@
             memorize_silenceTimeout = null;
             
             if (memorize_shouldRestart && memorize_currentWordIndex < memorize_wordSpans.length) {
-                console.log("Memorize: Auto-restarting recognition...");
+                console.log("[MEMORIZE] Auto-restarting recognition...");
                 memorize_restartTimeout = setTimeout(() => {
                     if (!memorize_isRecognizing && memorize_shouldRestart && memorize_currentWordIndex < memorize_wordSpans.length) {
                         try {
                             memorize_recognition.start();
                         } catch (e) {
-                            console.error("Memorize: Error restarting recognition:", e);
+                            console.error("[MEMORIZE] Error restarting recognition:", e);
                             memorize_shouldRestart = false;
                             memorize_updateUIForStopped();
                         }
@@ -507,6 +499,7 @@
         };
         
         function memorize_updateUIForStopped() {
+            console.log("[MEMORIZE] memorize_updateUIForStopped called.");
             memorize_speechButton.textContent = "🎤 ابدأ التحدث";
             memorize_speechButton.classList.remove('listening');
             if (memorize_currentWordIndex < memorize_wordSpans.length && memorize_currentWordIndex > 0) {
@@ -519,7 +512,7 @@
         }
 
         memorize_recognition.onerror = (event) => {
-            console.error("Memorize.SpeechRecognition.onerror:", event.error, event.message);
+            console.error("[MEMORIZE] SpeechRecognition.onerror:", event.error, event.message);
             let errorMsg = "حدث خطأ في التعرف الصوتي: " + event.error;
             
             if (event.error === 'aborted' && memorize_shouldRestart) return;
@@ -528,7 +521,7 @@
                 if (memorize_shouldRestart && memorize_currentWordIndex < memorize_wordSpans.length) return;
                 errorMsg = "لم يتم اكتشاف أي كلام. استمر في المحاولة...";
             } else if (['audio-capture', 'not-allowed', 'network', 'service-not-allowed'].includes(event.error)) {
-                memorize_shouldRestart = false; // Stop trying to restart on critical errors
+                memorize_shouldRestart = false; 
                  if (event.error === 'audio-capture') errorMsg = "مشكلة في التقاط الصوت من الميكروفون.";
                  if (event.error === 'not-allowed') errorMsg = "تم رفض إذن استخدام الميكروفون. يرجى السماح بالوصول.";
                  if (event.error === 'network') errorMsg = "مشكلة في الشبكة تمنع الاتصال بخدمة التعرف الصوتي.";
@@ -537,12 +530,13 @@
 
             if (!memorize_shouldRestart || event.error !== 'no-speech') {
                 memorize_speechStatus.textContent = errorMsg;
-                memorize_isRecognizing = false; // Ensure this is set
+                memorize_isRecognizing = false; 
                 memorize_updateUIForStopped();
             }
         };
 
         memorize_recognition.onresult = (event) => {
+            console.log("[MEMORIZE] SpeechRecognition.onresult event received.");
             if (memorize_silenceTimeout) clearTimeout(memorize_silenceTimeout);
             memorize_silenceTimeout = null;
             
@@ -555,6 +549,7 @@
                     interimTranscript += transcriptPart;
                 }
             }
+            console.log(`[MEMORIZE] Interim: '${interimTranscript}', AccumulatedFinal: '${memorize_accumulatedFinalTranscript}'`);
             
             if (interimTranscript && memorize_isRecognizing) {
                 memorize_speechStatus.textContent = "لحظة... " + interimTranscript;
@@ -567,30 +562,41 @@
 
             if (memorize_accumulatedFinalTranscript && memorize_currentWordIndex < memorize_wordSpans.length && memorize_isRecognizing) {
                 const wordsToProcess = memorize_accumulatedFinalTranscript.trim().split(" ");
-                memorize_accumulatedFinalTranscript = "";
+                memorize_accumulatedFinalTranscript = ""; // Reset for next final result
+                console.log("[MEMORIZE] Words to process from final speech:", wordsToProcess);
 
                 for (let spokenWord of wordsToProcess) {
                     if (!memorize_isRecognizing || memorize_currentWordIndex >= memorize_wordSpans.length) break;
 
                     const normalizedSpokenWord = memorize_normalizeArabic(spokenWord);
-                    if (!normalizedSpokenWord) continue;
+                    if (!normalizedSpokenWord) {
+                        console.log(`[MEMORIZE] Skipping empty normalized spoken word from: '${spokenWord}'`);
+                        continue;
+                    }
 
                     const targetWordSpan = memorize_wordSpans[memorize_currentWordIndex];
-                    const targetWordText = targetWordSpan.dataset.word;
+                    const targetWordText = targetWordSpan.dataset.word; 
+
+                    console.log(`[MEMORIZE] Comparing (index ${memorize_currentWordIndex}): Spoken (norm)='${normalizedSpokenWord}', Target (data-word)='${targetWordText}', Target span HTML='${targetWordSpan.outerHTML}'`);
 
                     if (targetWordText && normalizedSpokenWord === targetWordText) {
+                        console.log("[MEMORIZE] MATCH FOUND!");
                         const previouslyHighlighted = sentenceContainerShared.querySelector('.highlight-active-word');
                         if (previouslyHighlighted && previouslyHighlighted !== targetWordSpan) {
                             previouslyHighlighted.classList.remove('highlight-active-word');
                             previouslyHighlighted.classList.add('processed-word');
+                            console.log("[MEMORIZE] Moved previous highlight to processed:", previouslyHighlighted.textContent);
                         }
-                        targetWordSpan.classList.remove('processed-word'); // In case it was marked as such by mistake
+                        targetWordSpan.classList.remove('processed-word'); 
                         targetWordSpan.classList.add('highlight-active-word');
+                        console.log("[MEMORIZE] Highlighted as active:", targetWordSpan.textContent);
                         memorize_currentWordIndex++;
                         
                         if (memorize_currentWordIndex < memorize_wordSpans.length && memorize_isRecognizing) {
                              memorize_speechStatus.textContent = "ممتاز! الكلمة التالية...";
                         }
+                    } else {
+                        console.log("[MEMORIZE] NO MATCH.");
                     }
                 }
 
@@ -598,48 +604,48 @@
                     memorize_speechStatus.textContent = "أحسنت! لقد أكملت السورة.";
                     memorize_shouldRestart = false;
                     if (memorize_isRecognizing) {
-                        console.log("Memorize: All words matched, stopping recognition.");
-                        memorize_recognition.stop(); // This will trigger onend, which updates UI
+                        console.log("[MEMORIZE] All words matched, stopping recognition.");
+                        memorize_recognition.stop(); 
                     } else {
-                         memorize_updateUIForStopped(); // Update UI if not recognizing (e.g. stopped manually then processed)
+                         memorize_updateUIForStopped(); 
                     }
                 }
             }
         };
-    } else {
-        // SpeechRecognitionAPI is not available
-        // This setup is done in initMemorizeMode now
-    }
+    } 
 
     function memorize_toggleSpeechRecognition() {
-        if (!SpeechRecognitionAPI) return;
-        console.log(`Memorize.toggleSpeechRecognition. Current state: isRecognizing = ${memorize_isRecognizing}, shouldRestart = ${memorize_shouldRestart}`);
+        if (!SpeechRecognitionAPI) {
+            console.warn("[MEMORIZE] toggleSpeechRecognition: SpeechRecognition API not supported.");
+            return;
+        }
+        console.log(`[MEMORIZE] toggleSpeechRecognition. Current: isRecognizing = ${memorize_isRecognizing}, shouldRestart = ${memorize_shouldRestart}`);
 
-        if (memorize_isRecognizing || memorize_shouldRestart) { // If it's running or set to auto-restart
-            console.log("Memorize: Stopping recognition.");
-            memorize_shouldRestart = false; // User explicitly stopped it
+        if (memorize_isRecognizing || memorize_shouldRestart) { 
+            console.log("[MEMORIZE] Stopping recognition.");
+            memorize_shouldRestart = false; 
             if (memorize_restartTimeout) clearTimeout(memorize_restartTimeout);
             if (memorize_silenceTimeout) clearTimeout(memorize_silenceTimeout);
             memorize_restartTimeout = null;
             memorize_silenceTimeout = null;
 
             if (memorize_isRecognizing) {
-                memorize_recognition.stop(); // This will trigger onend, which updates UI
+                memorize_recognition.stop(); 
             } else {
-                memorize_updateUIForStopped(); // If not recognizing but shouldRestart was true
+                memorize_updateUIForStopped(); 
             }
         } else {
             if (memorize_currentWordIndex >= memorize_wordSpans.length) {
-                console.log("Memorize: All words done, resetting activity to start again.");
-                memorize_resetActivity(); // Reset to start over
+                console.log("[MEMORIZE] All words done, resetting activity to start again.");
+                memorize_resetActivity(); 
             }
             
-            console.log("Memorize: Starting recognition.");
+            console.log("[MEMORIZE] Starting recognition.");
             memorize_shouldRestart = true; 
             try {
                 memorize_recognition.start();
             } catch (e) {
-                console.error("Memorize: Error calling recognition.start():", e);
+                console.error("[MEMORIZE] Error calling recognition.start():", e);
                 memorize_speechStatus.textContent = "خطأ في بدء التعرف: " + e.message;
                 memorize_shouldRestart = false;
                 memorize_isRecognizing = false; 
@@ -649,33 +655,34 @@
     }
 
     function memorize_resetActivity() {
-        console.log("Memorize.resetActivity called.");
+        console.log("[MEMORIZE] memorize_resetActivity called.");
         memorize_currentWordIndex = 0;
         memorize_accumulatedFinalTranscript = "";
-        memorize_shouldRestart = false; // Don't auto-restart after a manual reset
+        memorize_shouldRestart = false; 
         
         if (memorize_restartTimeout) clearTimeout(memorize_restartTimeout);
         if (memorize_silenceTimeout) clearTimeout(memorize_silenceTimeout);
         memorize_restartTimeout = null;
         memorize_silenceTimeout = null;
         
-        resetAllWordStyles(); // This function now handles resetting styles and visibility for all spans
+        resetAllWordStyles(); 
         memorize_speechStatus.textContent = "اضغط \"ابدأ\" وتحدث";
         
         if (memorize_isRecognizing) {
-            console.log("Memorize.resetActivity: Recognition active, stopping.");
-            memorize_recognition.stop(); // Triggers onend which calls updateUIForStopped
+            console.log("[MEMORIZE] resetActivity: Recognition active, stopping.");
+            memorize_recognition.stop(); 
         } else {
             memorize_updateUIForStopped();
         }
     }
     
     function initMemorizeMode() {
+        console.log("[MEMORIZE] Initializing Memorize Mode.");
         memorizeModeUI.style.display = 'block';
         sentenceContainerShared.style.display = 'block';
-        resetAllWordStyles(); // Prepares words (hidden, no highlights)
+        resetAllWordStyles(); 
         allWordSpansShared.forEach(span => {
-            span.style.cursor = 'default'; // Words not clickable in memorize mode
+            span.style.cursor = 'default'; 
         });
 
 
@@ -684,7 +691,7 @@
             memorize_speechButton.textContent = "غير مدعوم";
             memorize_resetButton.disabled = true;
             memorize_speechStatus.textContent = "التعرف على الصوت غير مدعوم في هذا المتصفح.";
-            console.error("Memorize: SpeechRecognition API not found.");
+            console.error("[MEMORIZE] SpeechRecognition API not found.");
             return;
         } else {
              memorize_speechButton.disabled = false;
@@ -692,20 +699,23 @@
         }
 
         memorize_wordSpans.forEach(span => {
-            const normalizedText = memorize_normalizeArabic(span.textContent);
+            const originalText = span.textContent;
+            const normalizedText = memorize_normalizeArabic(originalText);
             span.dataset.word = normalizedText;
+            console.log(`[MEMORIZE INIT] Span textContent: '${originalText}', Normalized to data-word: '${normalizedText}'`);
         });
         
-        memorize_resetActivity(); // Initial setup of UI state and word visibility
+        memorize_resetActivity(); 
 
         memorize_speechButton.onclick = memorize_toggleSpeechRecognition;
         memorize_resetButton.onclick = memorize_resetActivity;
-        console.log("Memorize mode initialized.");
+        console.log("[MEMORIZE] Memorize mode initialized.");
     }
 
     function deactivateMemorizeMode() {
+        console.log("[MEMORIZE] Deactivating Memorize Mode.");
         if (SpeechRecognitionAPI && memorize_recognition && memorize_isRecognizing) {
-            memorize_shouldRestart = false; // Prevent restart when switching modes
+            memorize_shouldRestart = false; 
             memorize_recognition.stop();
         }
         if (memorize_restartTimeout) clearTimeout(memorize_restartTimeout);
@@ -716,12 +726,12 @@
         memorizeModeUI.style.display = 'none';
         memorize_speechButton.onclick = null;
         memorize_resetButton.onclick = null;
-        console.log("Memorize mode deactivated.");
+        console.log("[MEMORIZE] Memorize mode deactivated.");
     }
 
     // --- Mode Switching Logic ---
     function switchToMode(mode) {
-        // Deactivate previous mode
+        console.log(`[GLOBAL] Switching mode to: ${mode}. Current active: ${currentActiveMode}`);
         if (currentActiveMode === 'listen') {
             deactivateListenMode();
             btnSelectListen.classList.remove('active');
@@ -730,7 +740,6 @@
             btnSelectMemorize.classList.remove('active');
         }
 
-        // Activate new mode
         if (mode === 'listen') {
             initListenMode();
             btnSelectListen.classList.add('active');
@@ -739,20 +748,20 @@
             initMemorizeMode();
             btnSelectMemorize.classList.add('active');
             currentActiveMode = 'memorize';
-        } else { // No mode / initial state
+        } else { 
             listenModeUI.style.display = 'none';
             memorizeModeUI.style.display = 'none';
             sentenceContainerShared.style.display = 'none';
             currentActiveMode = null;
         }
+        console.log(`[GLOBAL] Mode switched. New active: ${currentActiveMode}`);
     }
 
     btnSelectListen.addEventListener('click', () => switchToMode('listen'));
     btnSelectMemorize.addEventListener('click', () => switchToMode('memorize'));
 
-    // Initial Page Load State: No mode selected
     switchToMode(null); 
-    console.log("Page loaded. Select a mode to begin.");
+    console.log("[GLOBAL] Page loaded. Select a mode to begin.");
 
 </script>
 </body>
