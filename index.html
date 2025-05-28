@@ -142,14 +142,16 @@
             cursor: pointer;
         }
 
-        /* Memorization mode styles */
+        /* Memorization mode styles - FIXED */
         .memorize-mode #sentence > span:not(.ayah-number),
         .memorize-mode .bismillah-container > span {
             visibility: hidden;
+            opacity: 0;
         }
 
         .memorize-mode .highlight {
             visibility: visible !important;
+            opacity: 1 !important;
             background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
             color: #000;
             transform: scale(1.05);
@@ -158,6 +160,7 @@
 
         .memorize-mode .spoken {
             visibility: visible !important;
+            opacity: 1 !important;
             background: rgba(67, 233, 123, 0.2);
             color: #333;
         }
@@ -181,7 +184,7 @@
             margin: 0 5px;
             display: inline;
             visibility: visible !important;
-            opacity: 0.8;
+            opacity: 1 !important;
         }
 
         .reset-btn {
@@ -263,12 +266,7 @@
             .ayah-number {
                 font-size: 0.65em;
             }
-       .memorize-mode .spoken {
-    visibility: visible !important;
-    background: rgba(67, 233, 123, 0.2);
-    color: #333;
-}
-	}
+        }
     </style>
 </head>
 <body>
@@ -501,12 +499,13 @@
         
         statusMessage.textContent = "اختر وضع التعلم";
         
-        // Clear all highlights
+        // Clear all highlights and reset visibility
         const allSpans = sentenceContainer.querySelectorAll('span');
         allSpans.forEach(span => {
             span.classList.remove('highlight', 'read', 'spoken');
             if (!span.classList.contains('ayah-number')) {
                 span.style.visibility = '';
+                span.style.opacity = '';
             }
         });
     }
@@ -785,65 +784,61 @@
                     const targetWordText = targetWordSpan.dataset.word;
 
                     if (targetWordText && normalizedSpokenWord === targetWordText) {
+                        // Move previous highlight to spoken
                         const previouslyHighlighted = document.querySelector('#sentence .highlight');
                         if (previouslyHighlighted && previouslyHighlighted !== targetWordSpan) {
                             previouslyHighlighted.classList.remove('highlight');
                             previouslyHighlighted.classList.add('spoken');
                         }
-                        targetWordSpan.classList.remove('spoken');
+                        
+                        
+						
+						
+						// Highlight current word
                         targetWordSpan.classList.add('highlight');
+                        targetWordSpan.classList.remove('spoken');
+                        
                         currentWordIndex++;
                         
-                        if (currentWordIndex < wordSpans.length && isRecognizing) {
-                             statusMessage.textContent = "ممتاز! الكلمة التالية...";
+                        if (currentWordIndex >= wordSpans.length) {
+                            shouldRestart = false;
+                            statusMessage.textContent = "أحسنت! اكتملت التلاوة بنجاح! 🎉";
+                            memorizeBtn.innerHTML = "✅ مكتمل";
+                            if (isRecognizing) {
+                                recognition.stop();
+                            }
+                            break;
+                        } else {
+                            statusMessage.textContent = `أحسنت! الكلمة التالية...`;
                         }
                     }
                 }
-
-                
-				      if (currentWordIndex >= wordSpans.length) {
-                   // All words completed
-                   statusMessage.textContent = "أحسنت! اكتملت السورة. 🎉";
-                   shouldRestart = false;
-                   const lastHighlighted = document.querySelector('#sentence .highlight');
-                   if (lastHighlighted) {
-                       lastHighlighted.classList.remove('highlight');
-                       lastHighlighted.classList.add('spoken');
-                   }
-                   if (isRecognizing) {
-                       recognition.stop();
-                   }
-               }
-           }
-       };
-   }
-
-   function toggleSpeechRecognition() {
-       if (isRecognizing) {
-           shouldRestart = false;
-           recognition.stop();
-           memorizeBtn.innerHTML = "📖 احفظ";
-           statusMessage.textContent = "تم إيقاف الاستماع";
-       } else {
-           shouldRestart = true;
-           try {
-               recognition.start();
-           } catch (e) {
-               console.error("Error starting recognition:", e);
-               statusMessage.textContent = "خطأ في بدء التعرف الصوتي";
-           }
-       }
-	   if (targetWordText && normalizedSpokenWord === targetWordText) {
-    const previouslyHighlighted = document.querySelector('#sentence .highlight');
-    if (previouslyHighlighted && previouslyHighlighted !== targetWordSpan) {
-        previouslyHighlighted.classList.remove('highlight');
-        previouslyHighlighted.classList.add('spoken'); // This should make it visible
+            }
+        };
     }
-    targetWordSpan.classList.remove('spoken');
-    targetWordSpan.classList.add('highlight'); // This should make current word visible
-    currentWordIndex++;
-}
-   }
+
+    function toggleSpeechRecognition() {
+        if (isRecognizing) {
+            shouldRestart = false;
+            recognition.stop();
+            memorizeBtn.innerHTML = "📖 احفظ";
+            statusMessage.textContent = "توقف الاستماع. اضغط لمتابعة.";
+        } else {
+            shouldRestart = true;
+            accumulatedFinalTranscript = "";
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error("Error starting recognition:", e);
+                statusMessage.textContent = "خطأ في بدء التعرف الصوتي";
+            }
+        }
+    }
+
+    // Make functions globally accessible
+    window.startListenMode = startListenMode;
+    window.startMemorizeMode = startMemorizeMode;
+    window.resetAll = resetAll;
 </script>
 </body>
 </html>
