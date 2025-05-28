@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سورة الزلزلة - اسمع واحفظ</title>
+    <style>
+        @font-face {
+            font-family: 'HafsFont';
+            src: url('conv_original-hafs.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'HafsFont', 'Amiri', 'Arabic Typesetting', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-message {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn:active {
+            transform: translateY(0px);
+        }
+
+        .control-btn.listen {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .control-btn.memorize {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 100%);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .bismillah-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+        }
+
+        #sentence {
+            font-size: 32px;
+            line-height: 2.8;
+            text-align: right;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        #sentence > span:not(.ayah-number),
+        .bismillah-container > span {
+            display: inline-block;
+            padding: 2px 4px;
+            margin: 0 2px;
+            border-radius: 5px;
+            vertical-align: baseline;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* Memorization mode styles */
+        .memorize-mode #sentence > span:not(.ayah-number),
+        .memorize-mode .bismillah-container > span {
+            visibility: hidden;
+        }
+
+        .memorize-mode .highlight {
+            visibility: visible !important;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: #000;
+            transform: scale(1.05);
+            box-shadow: 0 2px 10px rgba(67, 233, 123, 0.3);
+        }
+
+        .memorize-mode .spoken {
+            visibility: visible !important;
+            background: rgba(67, 233, 123, 0.2);
+            color: #333;
+        }
+
+        /* Listen mode styles */
+        .listen-mode .highlight {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #000;
+            transform: scale(1.05);
+            box-shadow: 0 2px 10px rgba(79, 172, 254, 0.3);
+        }
+
+        .listen-mode .read {
+            background: rgba(79, 172, 254, 0.2);
+            color: #333;
+        }
+
+        .ayah-number {
+            color: #667eea;
+            font-size: 0.75em;
+            margin: 0 5px;
+            display: inline;
+            visibility: visible !important;
+            opacity: 0.8;
+        }
+
+        .reset-btn {
+            background: rgba(108, 117, 125, 0.8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .reset-btn:hover {
+            background: rgba(108, 117, 125, 1);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+                padding: 20px;
+            }
+
+            .control-btn {
+                width: 80%;
+                max-width: 250px;
+                font-size: 1.1em;
+                padding: 12px 25px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            #sentence {
+                font-size: 26px;
+                line-height: 2.5;
+                padding: 20px;
+            }
+
+            .ayah-number {
+                font-size: 0.7em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.7em;
+            }
+
+            #sentence {
+                font-size: 22px;
+                line-height: 2.3;
+                padding: 15px;
+            }
+
+            .control-btn {
+                font-size: 1em;
+                padding: 10px 20px;
+            }
+
+            .ayah-number {
+                font-size: 0.65em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>سورة الزلزلة</h1>
+            <div class="status-message" id="statusMessage">اختر وضع التعلم</div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn listen" id="listenBtn" onclick="startListenMode()">
+                🎵 اسمع
+            </button>
+            <button class="control-btn memorize" id="memorizeBtn" onclick="startMemorizeMode()">
+                📖 احفظ
+            </button>
+        </div>
+
+        <div class="content">
+            <audio id="audioPlayer" src="099.mp3"></audio>
+            
+            <div id="sentence">
+                <div class="bismillah-container">
+                    <span data-time="0.79">بِسْمِ</span>
+                    <span data-time="1.17">اللَّهِ</span>
+                    <span data-time="1.87">الرَّحْمَٰنِ</span>
+                    <span data-time="2.93">الرَّحِيمِ</span>
+                </div>
+                <span data-time="6.59">إِذَا</span>
+                <span data-time="7.22">زُلْزِلَتِ</span>
+                <span data-time="7.99">الْأَرْضُ</span>
+                <span data-time="8.79">زِلْزَالَهَا</span><span class="ayah-number">۝١</span>
+                <span data-time="11.72">وَأَخْرَجَتِ</span>
+                <span data-time="12.71">الْأَرْضُ</span>
+                <span data-time="13.62">أَثْقَالَهَا</span><span class="ayah-number">۝٢</span>
+                <span data-time="16.28">وَقَالَ</span>
+                <span data-time="17.23">الْإِنسَانُ</span>
+                <span data-time="19.71">مَا</span>
+                <span data-time="20.18">لَهَا</span><span class="ayah-number">۝٣</span>
+                <span data-time="21.89">يَوْمَئِذٍ</span>
+                <span data-time="23.62">تُحَدِّثُ</span>
+                <span data-time="24.89">أَخْبَارَهَا</span><span class="ayah-number">۝٤</span>
+                <span data-time="27.69">بِأَنَّ</span>
+                <span data-time="28.88">رَبَّكَ</span>
+                <span data-time="30.21">أَوْحَىٰ</span>
+                <span data-time="31.18">لَهَا</span><span class="ayah-number">۝٥</span>
+                <span data-time="32.66">يَوْمَئِذٍ</span>
+                <span data-time="34.35">يَصْدُرُ</span>
+                <span data-time="35.54">النَّاسُ</span>
+                <span data-time="36.99">أَشْتَاتًا</span>
+                <span data-time="38.39">لِيُرَوْا</span>
+                <span data-time="39.50">أَعْمَالَهُمْ</span><span class="ayah-number">۝٦</span>
+                <span data-time="41.76">فَمَن</span>
+                <span data-time="42.48">يَعْمَلْ</span>
+                <span data-time="43.48">مِثْقَالَ</span>
+                <span data-time="44.49">ذَرَّةٍ</span>
+                <span data-time="45.69">خَيْرًا</span>
+                <span data-time="47.04">يَرَهُ</span><span class="ayah-number">۝٧</span>
+                <span data-time="49.31">وَمَن</span>
+                <span data-time="50.08">يَعْمَلْ</span>
+                <span data-time="51.26">مِثْقَالَ</span>
+                <span data-time="52.39">ذَرَّةٍ</span>
+                <span data-time="54.02">شَرًّا</span>
+                <span data-time="56.18">يَرَهُ</span><span class="ayah-number">۝٨</span>
+            </div>
+
+            <div style="text-align: center;">
+                <button class="reset-btn" id="resetBtn" onclick="resetAll()" style="display: none;">
+                    🔄 إعادة تعيين
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Global variables
+    const body = document.body;
+    const statusMessage = document.getElementById("statusMessage");
+    const listenBtn = document.getElementById("listenBtn");
+    const memorizeBtn = document.getElementById("memorizeBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const audio = document.getElementById("audioPlayer");
+    const sentenceContainer = document.getElementById("sentence");
+    
+    let currentMode = null;
+    let isActive = false;
+
+    // Listen Mode Variables
+    let isPaused = false;
+    let audioWasEnded = false;
+    const words = sentenceContainer.querySelectorAll("span[data-time]");
+
+    // Memorize Mode Variables  
+    const wordSpans = Array.from(
+        sentenceContainer.querySelectorAll('#sentence > span:not(.ayah-number), .bismillah-container > span')
+    );
+    let currentWordIndex = 0;
+    let isRecognizing = false;
+    let accumulatedFinalTranscript = "";
+    let shouldRestart = false;
+    let restartTimeout;
+    let silenceTimeout;
+    let recognition;
+
+    // Initialize Speech Recognition for Memorize Mode
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'ar-SA';
+        setupSpeechRecognition();
+    }
+
+    function normalizeArabic(text) {
+        if (!text) return "";
+        text = text.replace(/[إأآٱ]/g, "ا");
+        text = text.replace(/ى/g, "ي");
+        text = text.replace(/ؤ/g, "و");
+        text = text.replace(/ئ/g, "ي");
+        text = text.replace(/ة/g, "ه");
+        return text.trim();
+    }
+
+    // Prepare word spans for memorize mode
+    wordSpans.forEach(span => {
+        const normalizedText = normalizeArabic(span.textContent);
+        span.dataset.word = normalizedText;
+    });
+
+    function startListenMode() {
+        if (currentMode === 'listen' && isActive) {
+            toggleAudio();
+            return;
+        }
+        
+        resetAll();
+        currentMode = 'listen';
+        isActive = true;
+        
+        body.className = 'listen-mode';
+        listenBtn.classList.add('active');
+        listenBtn.innerHTML = '⏸️ توقف';
+        memorizeBtn.style.display = 'none';
+        resetBtn.style.display = 'inline-block';
+        
+        statusMessage.textContent = "جاري تشغيل التلاوة...";
+        
+        audio.play();
+        isPaused = false;
+        highlightWords();
+    }
+
+    function startMemorizeMode() {
+        if (currentMode === 'memorize' && isActive) {
+            toggleSpeechRecognition();
+            return;
+        }
+        
+        resetAll();
+        currentMode = 'memorize';
+        isActive = true;
+        
+        body.className = 'memorize-mode';
+        memorizeBtn.classList.add('active');
+        memorizeBtn.innerHTML = '🔴 جاري الاستماع...';
+        listenBtn.style.display = 'none';  
+        resetBtn.style.display = 'inline-block';
+        
+        statusMessage.textContent = "ابدأ بقراءة الكلمات...";
+        
+        if (SpeechRecognition) {
+            shouldRestart = true;
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error("Error starting recognition:", e);
+                statusMessage.textContent = "خطأ في بدء التعرف الصوتي";
+                resetToInitial();
+            }
+        } else {
+            statusMessage.textContent = "التعرف الصوتي غير مدعوم في هذا المتصفح";
+            resetToInitial();
+        }
+    }
+
+    function resetAll() {
+        // Stop any active processes
+        if (currentMode === 'listen') {
+            audio.pause();
+            audio.currentTime = 0;
+            audioWasEnded = false;
+            isPaused = false;
+        }
+        
+        if (currentMode === 'memorize') {
+            shouldRestart = false;
+            if (restartTimeout) {
+                clearTimeout(restartTimeout);
+                restartTimeout = null;
+            }
+            if (silenceTimeout) {
+                clearTimeout(silenceTimeout);
+                silenceTimeout = null;
+            }
+            if (isRecognizing && recognition) {
+                recognition.stop();
+            }
+            currentWordIndex = 0;
+            accumulatedFinalTranscript = "";
+        }
+        
+        resetToInitial();
+    }
+
+    function resetToInitial() {
+        currentMode = null;
+        isActive = false;
+        isRecognizing = false;
+        
+        // Reset UI
+        body.className = '';
+        listenBtn.classList.remove('active');
+        memorizeBtn.classList.remove('active');
+        listenBtn.innerHTML = '🎵 اسمع';
+        memorizeBtn.innerHTML = '📖 احفظ';
+        listenBtn.style.display = 'flex';
+        memorizeBtn.style.display = 'flex';
+        resetBtn.style.display = 'none';
+        
+        statusMessage.textContent = "اختر وضع التعلم";
+        
+        // Clear all highlights
+        const allSpans = sentenceContainer.querySelectorAll('span');
+        allSpans.forEach(span => {
+            span.classList.remove('highlight', 'read', 'spoken');
+            if (!span.classList.contains('ayah-number')) {
+                span.style.visibility = '';
+            }
+        });
+    }
+
+    // Listen Mode Functions
+    function toggleAudio() {
+        if (audioWasEnded) {
+            resetHighlights();
+            audio.currentTime = 0;
+        }
+
+        if (audio.paused || audio.ended) {
+            if (audio.ended) {
+                audio.currentTime = 0;
+                resetHighlights();
+            }
+            audio.play();
+            isPaused = false;
+            listenBtn.innerHTML = "⏸️ توقف";
+            statusMessage.textContent = "جاري تشغيل التلاوة...";
+        } else {
+            audio.pause();
+            isPaused = true;
+            listenBtn.innerHTML = "▶️ استمرار";
+            statusMessage.textContent = "متوقف مؤقتاً";
+        }
+    }
+
+    function resetHighlights() {
+        words.forEach(word => {
+            word.classList.remove("highlight");
+            word.classList.remove("read");
+        });
+        audioWasEnded = false;
+    }
+
+    function highlightWords() {
+        audio.ontimeupdate = () => {
+            if (isPaused || audioWasEnded) return;
+
+            const currentTime = audio.currentTime;
+
+            words.forEach((word, index) => {
+                let wordTime = parseFloat(word.dataset.time);
+                let endTime;
+                let nextWordTime = Infinity;
+
+                for (let i = index + 1; i < words.length; i++) {
+                    if (words[i].hasAttribute('data-time')) {
+                        nextWordTime = parseFloat(words[i].dataset.time);
+                        break;
+                    }
+                }
+
+                if (nextWordTime !== Infinity) {
+                    endTime = nextWordTime;
+                } else {
+                    endTime = wordTime + 1.0;
+                    if (audio.duration && !isNaN(audio.duration)) {
+                        endTime = audio.duration;
+                    }
+                }
+
+                if (currentTime >= wordTime && currentTime < endTime) {
+                    word.classList.add("highlight");
+                    word.classList.remove("read");
+                } else if (currentTime >= endTime) {
+                    word.classList.add("read");
+                    word.classList.remove("highlight");
+                } else {
+                    word.classList.remove("highlight");
+                    word.classList.remove("read");
+                }
+            });
+
+            if (!audio.ended && audio.currentTime >= audio.duration - 0.1 && audio.duration > 0) {
+                statusMessage.textContent = "انتهت التلاوة";
+                audioWasEnded = true;
+                words.forEach(w => {
+                    if(w.hasAttribute('data-time') && parseFloat(w.dataset.time) <= audio.currentTime) {
+                        w.classList.add('read');
+                        w.classList.remove('highlight');
+                    }
+                });
+            }
+        };
+    }
+
+    // Add click listeners for words in listen mode
+    words.forEach(word => {
+        word.addEventListener("click", function() {
+            if (currentMode !== 'listen') return;
+            
+            if (audioWasEnded) {
+                resetHighlights();
+                audioWasEnded = false;
+            }
+
+            let startTime = parseFloat(this.dataset.time);
+            audio.currentTime = startTime;
+
+            const currentTime = audio.currentTime;
+            words.forEach(w => {
+                let wt = parseFloat(w.dataset.time);
+                let et;
+                let nwt = Infinity;
+                let currentIndex = Array.from(words).indexOf(w);
+                for (let i = currentIndex + 1; i < words.length; i++) {
+                    if (words[i].hasAttribute('data-time')) {
+                        nwt = parseFloat(words[i].dataset.time);
+                        break;
+                    }
+                }
+                if (nwt !== Infinity) { et = nwt; } else { et = wt + 1.0; if (audio.duration && !isNaN(audio.duration)) {et = audio.duration;} }
+
+                if (currentTime >= wt && currentTime < et) {
+                    w.classList.add("highlight"); w.classList.remove("read");
+                } else if (currentTime >= et) {
+                    w.classList.add("read"); w.classList.remove("highlight");
+                } else {
+                    w.classList.remove("highlight"); w.classList.remove("read");
+                }
+            });
+
+            if (audio.paused || audio.ended) {
+                isPaused = false;
+                listenBtn.innerHTML = "⏸️ توقف";
+                audio.play();
+            } else {
+                isPaused = false;
+                listenBtn.innerHTML = "⏸️ توقف";
+            }
+        });
+    });
+
+    audio.addEventListener('ended', () => {
+        statusMessage.textContent = "انتهت التلاوة - اضغط إعادة للاستماع مرة أخرى";
+        isPaused = true;
+        audioWasEnded = true;
+        words.forEach(w => {
+            if (w.classList.contains('highlight')) {
+                w.classList.remove('highlight');
+                w.classList.add('read');
+            } else if (w.hasAttribute('data-time') && parseFloat(w.dataset.time) <= audio.currentTime) {
+                w.classList.add('read');
+            }
+        });
+    });
+
+    // Memorize Mode Functions
+    function setupSpeechRecognition() {
+        recognition.onstart = () => {
+            console.log("Recognition started.");
+            isRecognizing = true;
+            accumulatedFinalTranscript = "";
+            memorizeBtn.innerHTML = "🔴 جاري الاستماع...";
+            statusMessage.textContent = "تحدث الآن...";
+            
+            if (restartTimeout) {
+                clearTimeout(restartTimeout);
+                restartTimeout = null;
+            }
+            if (silenceTimeout) {
+                clearTimeout(silenceTimeout);
+                silenceTimeout = null;
+            }
+        };
+
+        recognition.onend = () => {
+            console.log("Recognition ended.");
+            isRecognizing = false;
+            
+            if (restartTimeout) {
+                clearTimeout(restartTimeout);
+                restartTimeout = null;
+            }
+            if (silenceTimeout) {
+                clearTimeout(silenceTimeout);
+                silenceTimeout = null;
+            }
+            
+            if (shouldRestart && currentWordIndex < wordSpans.length) {
+                console.log("Auto-restarting recognition...");
+                restartTimeout = setTimeout(() => {
+                    if (!isRecognizing && shouldRestart && currentWordIndex < wordSpans.length) {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.error("Error restarting recognition:", e);
+                            shouldRestart = false;
+                            updateMemorizeUI();
+                        }
+                    }
+                }, 100);
+            } else {
+                updateMemorizeUI();
+            }
+        };
+
+        function updateMemorizeUI() {
+            memorizeBtn.innerHTML = "📖 احفظ";
+            if (currentWordIndex < wordSpans.length && currentWordIndex > 0) {
+                statusMessage.textContent = "توقف الاستماع. اضغط لمتابعة.";
+            } else if (currentWordIndex === 0) {
+                statusMessage.textContent = "اضغط \"احفظ\" وتحدث";
+            } else {
+                statusMessage.textContent = "أحسنت! مكتمل. اضغط إعادة للبدء من جديد.";
+            }
+        }
+
+        recognition.onerror = (event) => {
+            console.error("Recognition error:", event.error);
+            let errorMsg = "حدث خطأ في التعرف الصوتي: " + event.error;
+            
+            if (event.error === 'aborted' && shouldRestart) {
+                return;
+            }
+            
+            if (event.error === 'no-speech') {
+                if (shouldRestart && currentWordIndex < wordSpans.length) {
+                    return;
+                }
+                errorMsg = "لم يتم اكتشاف أي كلام. استمر في المحاولة...";
+            } else if (event.error === 'audio-capture') {
+                errorMsg = "مشكلة في التقاط الصوت من الميكروفون.";
+                shouldRestart = false;
+            } else if (event.error === 'not-allowed') {
+                errorMsg = "تم رفض إذن استخدام الميكروفون.";
+                shouldRestart = false;
+            }
+
+            if (!shouldRestart || event.error !== 'no-speech') {
+                statusMessage.textContent = errorMsg;
+                isRecognizing = false;
+                memorizeBtn.innerHTML = "📖 احفظ";
+            }
+        };
+
+        recognition.onresult = (event) => {
+            if (silenceTimeout) {
+                clearTimeout(silenceTimeout);
+                silenceTimeout = null;
+            }
+            
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcriptPart = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    accumulatedFinalTranscript += transcriptPart + " ";
+                } else {
+                    interimTranscript += transcriptPart;
+                }
+            }
+            
+            if (interimTranscript && isRecognizing) {
+                statusMessage.textContent = "لحظة... " + interimTranscript;
+                
+                silenceTimeout = setTimeout(() => {
+                    if (isRecognizing && shouldRestart && currentWordIndex < wordSpans.length) {
+                        statusMessage.textContent = "في انتظار الكلمة التالية...";
+                    }
+                }, 3000);
+            }
+
+            if (accumulatedFinalTranscript && currentWordIndex < wordSpans.length && isRecognizing) {
+                const wordsToProcess = accumulatedFinalTranscript.trim().split(" ");
+                accumulatedFinalTranscript = "";
+
+                for (let spokenWord of wordsToProcess) {
+                    if (!isRecognizing || currentWordIndex >= wordSpans.length) break;
+
+                    const normalizedSpokenWord = normalizeArabic(spokenWord);
+                    if (!normalizedSpokenWord) continue;
+
+                    const targetWordSpan = wordSpans[currentWordIndex];
+                    const targetWordText = targetWordSpan.dataset.word;
+
+                    if (targetWordText && normalizedSpokenWord === targetWordText) {
+                        const previouslyHighlighted = document.querySelector('#sentence .highlight');
+                        if (previouslyHighlighted && previouslyHighlighted !== targetWordSpan) {
+                            previouslyHighlighted.classList.remove('highlight');
+                            previouslyHighlighted.classList.add('spoken');
+                        }
+                        targetWordSpan.classList.remove('spoken');
+                        targetWordSpan.classList.add('highlight');
+                        currentWordIndex++;
+                        
+                        if (currentWordIndex < wordSpans.length && isRecognizing) {
+                             statusMessage.textContent = "ممتاز! الكلمة التالية...";
+                        }
+                    }
+                }
+
+                
+				      if (currentWordIndex >= wordSpans.length) {
+                   // All words completed
+                   statusMessage.textContent = "أحسنت! اكتملت السورة. 🎉";
+                   shouldRestart = false;
+                   const lastHighlighted = document.querySelector('#sentence .highlight');
+                   if (lastHighlighted) {
+                       lastHighlighted.classList.remove('highlight');
+                       lastHighlighted.classList.add('spoken');
+                   }
+                   if (isRecognizing) {
+                       recognition.stop();
+                   }
+               }
+           }
+       };
+   }
+
+   function toggleSpeechRecognition() {
+       if (isRecognizing) {
+           shouldRestart = false;
+           recognition.stop();
+           memorizeBtn.innerHTML = "📖 احفظ";
+           statusMessage.textContent = "تم إيقاف الاستماع";
+       } else {
+           shouldRestart = true;
+           try {
+               recognition.start();
+           } catch (e) {
+               console.error("Error starting recognition:", e);
+               statusMessage.textContent = "خطأ في بدء التعرف الصوتي";
+           }
+       }
+   }
+</script>
+</body>
+</html>
